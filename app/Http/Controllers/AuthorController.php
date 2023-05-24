@@ -5,78 +5,71 @@ namespace App\Http\Controllers;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\Author;
-use Illuminate\Support\Facades\Auth;
+use App\Services\AuthorService;
 
 class AuthorController extends Controller
 {
     use ApiResponser;
 
     /**
+     * The service to consume the author service
+     * @var AuthorService
+     */
+    public $authorService;
+
+    /**
      * Create a new controller instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(AuthorService $authorService)
     {
-        //
+        $this->authorService = $authorService;
     }
 
+    /**
+     * Retrieve and show all the authors
+     * @return Illuminate\Http\Response
+     */
     public function index()
-    {   
-        $authors = Author::all();
-        return $this->successResponse($authors);
+    {
+        return $this->successResponse($this->authorService->obtainAuthors());
     }
 
+    /**
+     * Creates an instance of author
+     * @return Illuminate\Http\Response
+     */
     public function store(Request $request)
     {
-        $rules = [
-            'name' => 'required|max:255',
-            'gender' => 'required|max:255|in:male,female',
-            'country' => 'required|max:255',
-        ];
-
-        $this->validate($request, $rules);
-        $author = Author::create($request->all());
-
-        return $this->successResponse($author, Response::HTTP_CREATED);
+        return $this->successResponse($this->authorService->createAuthor($request->all()), Response::HTTP_CREATED);
     }
 
+    /**
+     * Obtain and show an instance of author
+     * @return Illuminate\Http\Response
+     */
     public function show($author)
     {
-        $author = Author::findOrFail($author);
-        return $this->successResponse($author);
-
+        return $this->successResponse($this->authorService->obtainAuthor($author));
     }
 
+    /**
+     * Updated an instance of author
+     * @return Illuminate\Http\Response
+     */
     public function update(Request $request, $author)
     {
-        $rules = [
-            'name' => 'required|max:255',
-            'gender' => 'required|max:255|in:male,female',
-            'country' => 'required|max:255',
-        ];
-
-        $this->validate($request, $rules);
-
-        $author = Author::findOrFail($author);
-
-        $author->fill($request->all());
-
-        if($author->isClean()){
-            return $this->errorResponse('At least one value must change', Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $author->save();
-
-        return $this->successResponse($author);
-
+        return $this->successResponse($this->authorService->editAuthor($request->all(), $author));
     }
 
+    /**
+     * Removes an instance of author
+     * @return Illuminate\Http\Response
+     */
     public function destroy($author)
     {
-        $author = Author::findOrFail($author);
-        $author->delete();
-        return $this->successResponse($author);
+        return $this->successResponse($this->authorService->deleteAuthor($author));
     }
+
 }
