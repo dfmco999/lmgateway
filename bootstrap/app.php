@@ -1,12 +1,12 @@
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
-try {
-    (new Dotenv\Dotenv(__DIR__ . '/../'))->load();
-} catch (Dotenv\Exception\InvalidPathException $e) {
-    //
-}
+(new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
+    dirname(__DIR__)
+))->bootstrap();
+
+date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 
 /*
 |--------------------------------------------------------------------------
@@ -20,18 +20,14 @@ try {
 */
 
 $app = new Laravel\Lumen\Application(
-    realpath(__DIR__ . '/../')
+    dirname(__DIR__)
 );
+
+//$app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
 
 $app->withFacades();
 
 $app->withEloquent();
-
-/**
- * Registering config files
- */
-$app->configure('services');
-$app->configure('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +50,21 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
+
+
+/*
+|--------------------------------------------------------------------------
+| Register Config Files
+|--------------------------------------------------------------------------
+|
+| Now we will register the "app" configuration file. If the file exists in
+| your configuration directory it will be loaded; otherwise, we'll load
+| the default version. You may register other files below as needed.
+|
+*/
+
+$app->configure('app');
+
 /*
 |--------------------------------------------------------------------------
 | Register Middleware
@@ -65,14 +76,13 @@ $app->singleton(
 |
 */
 
-// $app->middleware([
-//    App\Http\Middleware\ExampleMiddleware::class
-// ]);
+ $app->middleware([
+     App\Http\Middleware\AuthenticateAccess::class
+ ]);
 
-$app->routeMiddleware([
-    'auth' => App\Http\Middleware\Authenticate::class,
-    'client.credentials' => Laravel\Passport\Http\Middleware\CheckClientCredentials::class,
-]);
+// $app->routeMiddleware([
+//     'auth' => App\Http\Middleware\Authenticate::class,
+// ]);
 
 /*
 |--------------------------------------------------------------------------
@@ -85,11 +95,9 @@ $app->routeMiddleware([
 |
 */
 
-// $app->register(App\Providers\EventServiceProvider::class);
 // $app->register(App\Providers\AppServiceProvider::class);
-$app->register(App\Providers\AuthServiceProvider::class);
-$app->register(Laravel\Passport\PassportServiceProvider::class);
-$app->register(Dusterio\LumenPassport\PassportServiceProvider::class);
+// $app->register(App\Providers\AuthServiceProvider::class);
+// $app->register(App\Providers\EventServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -105,7 +113,7 @@ $app->register(Dusterio\LumenPassport\PassportServiceProvider::class);
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
-    require __DIR__ . '/../routes/web.php';
+    require __DIR__.'/../routes/web.php';
 });
 
 return $app;
